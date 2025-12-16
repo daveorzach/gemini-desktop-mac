@@ -18,26 +18,15 @@ struct ChatBarView: View {
 
             Button(action: onExpandToMain) {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
-                    .font(.system(size: Constants.buttonFontSize, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .frame(width: Constants.buttonSize, height: Constants.buttonSize)
+                    .frame(width: 38, height: 38)
                     .background(.ultraThinMaterial, in: Circle())
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .padding(Constants.buttonPadding)
-            .offset(x: Constants.buttonOffsetX)
+            .padding(16)
+            .offset(x: -6, y: -2)
         }
     }
-}
-
-extension ChatBarView {
-
-    struct Constants {
-        static let buttonFontSize: CGFloat = 14
-        static let buttonSize: CGFloat = 38
-        static let buttonPadding: CGFloat = 16
-        static let buttonOffsetX: CGFloat = -2
-    }
-
 }

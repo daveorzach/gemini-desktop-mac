@@ -45,10 +45,11 @@
 			);
 			target = 74CBD8A92EED8FCB00F226E3 /* GeminiDesktop */;
 		};
-		749D26102EEE2E930054BA29 /* Exceptions for "Windows" folder in "GeminiDesktop" target */ = {
+		749D26102EEE2E930054BA29 /* Exceptions for "ChatBar" folder in "GeminiDesktop" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				ChatBarPanel.swift,
+				ChatBarView.swift,
 			);
 			target = 74CBD8A92EED8FCB00F226E3 /* GeminiDesktop */;
 		};
@@ -97,12 +98,12 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		749D25E32EEE2C330054BA29 /* Windows */ = {
+		749D25E32EEE2C330054BA29 /* ChatBar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				749D26102EEE2E930054BA29 /* Exceptions for "Windows" folder in "GeminiDesktop" target */,
+				749D26102EEE2E930054BA29 /* Exceptions for "ChatBar" folder in "GeminiDesktop" target */,
 			);
-			path = Windows;
+			path = ChatBar;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -124,7 +125,7 @@
 			children = (
 				749D25D32EEE2C330054BA29 /* App */,
 				749D25D52EEE2C330054BA29 /* Coordinators */,
-				749D25E32EEE2C330054BA29 /* Windows */,
+				749D25E32EEE2C330054BA29 /* ChatBar */,
 				7452D4CF2EF08E5D00EDD8A4 /* WebKit */,
 				749D25E12EEE2C330054BA29 /* Views */,
 				749D25DC2EEE2C330054BA29 /* Utils */,
