@@ -55,6 +55,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		7452D4CF2EF08E5D00EDD8A4 /* WebKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WebKit;
+			sourceTree = "<group>";
+		};
 		749D25D32EEE2C330054BA29 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -120,6 +125,7 @@
 				749D25D32EEE2C330054BA29 /* App */,
 				749D25D52EEE2C330054BA29 /* Coordinators */,
 				749D25E32EEE2C330054BA29 /* Windows */,
+				7452D4CF2EF08E5D00EDD8A4 /* WebKit */,
 				749D25E12EEE2C330054BA29 /* Views */,
 				749D25DC2EEE2C330054BA29 /* Utils */,
 				749D25DA2EEE2C330054BA29 /* Resources */,
@@ -151,6 +157,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				7452D4CF2EF08E5D00EDD8A4 /* WebKit */,
 				749D25E12EEE2C330054BA29 /* Views */,
 			);
 			name = GeminiDesktop;

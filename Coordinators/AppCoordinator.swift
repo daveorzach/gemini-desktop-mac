@@ -8,7 +8,6 @@
 import SwiftUI
 import AppKit
 import WebKit
-import Combine
 
 extension Notification.Name {
     static let openMainWindow = Notification.Name("openMainWindow")
@@ -17,114 +16,34 @@ extension Notification.Name {
 @Observable
 class AppCoordinator {
     private var chatBar: ChatBarPanel?
-    let webView: WKWebView
-    var canGoBack: Bool = false
-    var canGoForward: Bool = false
-    private var backObserver: NSKeyValueObservation?
-    private var forwardObserver: NSKeyValueObservation?
-    private var urlObserver: NSKeyValueObservation?
-    private var isAtHome: Bool = true
+    var webViewModel = WebViewModel()
 
     var openWindowAction: ((String) -> Void)?
 
+    var canGoBack: Bool { webViewModel.canGoBack }
+    var canGoForward: Bool { webViewModel.canGoForward }
+
     init() {
-        let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()
-        configuration.defaultWebpagePreferences.allowsContentJavaScript = true
-        configuration.mediaTypesRequiringUserActionForPlayback = []
-
-        let wv = WKWebView(frame: .zero, configuration: configuration)
-        wv.allowsBackForwardNavigationGestures = true
-        wv.allowsLinkPreview = true
-
-        // Set custom User-Agent to appear as Safari
-        wv.customUserAgent = Constants.userAgent
-
-        // Apply saved page zoom
-        let savedZoom = UserDefaults.standard.double(forKey: UserDefaultsKeys.pageZoom.rawValue)
-        wv.pageZoom = savedZoom > 0 ? savedZoom : Constants.defaultPageZoom
-
-        wv.load(URLRequest(url: Constants.geminiURL))
-
-        self.webView = wv
-
-        backObserver = wv.observe(\.canGoBack, options: [.new, .initial]) { [weak self] webView, _ in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.canGoBack = !self.isAtHome && webView.canGoBack
-            }
-        }
-
-        forwardObserver = wv.observe(\.canGoForward, options: [.new, .initial]) { [weak self] webView, _ in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.canGoForward = webView.canGoForward
-            }
-        }
-
-        urlObserver = wv.observe(\.url, options: .new) { [weak self] webView, _ in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                guard let currentURL = webView.url else { return }
-
-                // Check if we're at the Gemini home/app page
-                let isGeminiApp = currentURL.host == Constants.geminiHost && currentURL.path.hasPrefix(Constants.geminiAppPath)
-
-                if isGeminiApp {
-                    self.isAtHome = true
-                    self.canGoBack = false
-                } else {
-                    self.isAtHome = false
-                    self.canGoBack = webView.canGoBack
-                }
-            }
-        }
-
         // Observe notifications for window opening
         NotificationCenter.default.addObserver(forName: .openMainWindow, object: nil, queue: .main) { [weak self] _ in
             self?.openMainWindow()
         }
     }
 
-    func reloadHomePage() {
-        isAtHome = true
-        canGoBack = false
-        webView.load(URLRequest(url: Constants.geminiURL))
-    }
+    // MARK: - Navigation
 
-    func goBack() {
-        isAtHome = false
-        webView.goBack()
-    }
+    func goBack() { webViewModel.goBack() }
+    func goForward() { webViewModel.goForward() }
+    func goHome() { webViewModel.loadHome() }
+    func reload() { webViewModel.reload() }
 
-    func reload() {
-        webView.reload()
-    }
+    // MARK: - Zoom
 
-    func goForward() {
-        webView.goForward()
-    }
+    func zoomIn() { webViewModel.zoomIn() }
+    func zoomOut() { webViewModel.zoomOut() }
+    func resetZoom() { webViewModel.resetZoom() }
 
-    func goHome() {
-        reloadHomePage()
-    }
-
-    func zoomIn() {
-        let newZoom = min((webView.pageZoom * 100 + 1).rounded() / 100, 1.4)
-        webView.pageZoom = newZoom
-        UserDefaults.standard.set(newZoom, forKey: UserDefaultsKeys.pageZoom.rawValue)
-    }
-
-    func zoomOut() {
-        let newZoom = max((webView.pageZoom * 100 - 1).rounded() / 100, 0.6)
-        webView.pageZoom = newZoom
-        UserDefaults.standard.set(newZoom, forKey: UserDefaultsKeys.pageZoom.rawValue)
-    }
-
-    func resetZoom() {
-        webView.pageZoom = Constants.defaultPageZoom
-        UserDefaults.standard.set(Constants.defaultPageZoom, forKey: UserDefaultsKeys.pageZoom.rawValue)
-    }
+    // MARK: - Chat Bar
 
     func showChatBar() {
         // Hide main window when showing chat bar
@@ -139,7 +58,7 @@ class AppCoordinator {
         }
 
         let contentView = ChatBarView(
-            webView: webView,
+            webView: webViewModel.wkWebView,
             onExpandToMain: { [weak self] in
                 self?.expandToMainWindow()
             }
@@ -219,11 +138,6 @@ class AppCoordinator {
 extension AppCoordinator {
 
     struct Constants {
-        static let geminiURL = URL(string: "https://gemini.google.com/app")!
-        static let geminiHost = "gemini.google.com"
-        static let geminiAppPath = "/app"
-        static let userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
-        static let defaultPageZoom: Double = 1.0
         static let dockOffset: CGFloat = 50
         static let mainWindowIdentifier = "main"
         static let mainWindowTitle = "Gemini Desktop"
