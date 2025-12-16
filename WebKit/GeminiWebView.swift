@@ -1,5 +1,5 @@
 //
-//  GeminiWebViewRepresentable.swift
+//  GeminiWebView.swift
 //  GeminiDesktop
 //
 //  Created by alexcding on 2025-12-13.
@@ -8,7 +8,7 @@
 import SwiftUI
 import WebKit
 
-struct GeminiWebViewRepresentable: NSViewRepresentable {
+struct GeminiWebView: NSViewRepresentable {
     let webView: WKWebView
 
     func makeNSView(context: Context) -> WebViewContainer {
@@ -105,7 +105,7 @@ struct GeminiWebViewRepresentable: NSViewRepresentable {
             alert.addButton(withTitle: "OK")
             alert.addButton(withTitle: "Cancel")
 
-            let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: GeminiWebViewRepresentable.Constants.textFieldWidth, height: GeminiWebViewRepresentable.Constants.textFieldHeight))
+            let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: GeminiWebView.Constants.textFieldWidth, height: GeminiWebView.Constants.textFieldHeight))
             textField.stringValue = defaultText ?? ""
             alert.accessoryView = textField
 
@@ -113,7 +113,7 @@ struct GeminiWebViewRepresentable: NSViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
-            decisionHandler(origin.host.contains(GeminiWebViewRepresentable.Constants.trustedHost) ? .grant : .prompt)
+            decisionHandler(origin.host.contains(GeminiWebView.Constants.trustedHost) ? .grant : .prompt)
         }
 
         func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
@@ -130,10 +130,10 @@ struct GeminiWebViewRepresentable: NSViewRepresentable {
 
 class WebViewContainer: NSView {
     let webView: WKWebView
-    let coordinator: GeminiWebViewRepresentable.Coordinator
+    let coordinator: GeminiWebView.Coordinator
     private var windowObserver: NSObjectProtocol?
 
-    init(webView: WKWebView, coordinator: GeminiWebViewRepresentable.Coordinator) {
+    init(webView: WKWebView, coordinator: GeminiWebView.Coordinator) {
         self.webView = webView
         self.coordinator = coordinator
         super.init(frame: .zero)
@@ -192,7 +192,7 @@ class WebViewContainer: NSView {
 }
 
 
-extension GeminiWebViewRepresentable {
+extension GeminiWebView {
 
     struct Constants {
         static let textFieldWidth: CGFloat = 200

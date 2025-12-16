@@ -14,7 +14,7 @@ struct ChatBarView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            GeminiWebViewRepresentable(webView: webView)
+            GeminiWebView(webView: webView)
 
             Button(action: onExpandToMain) {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
