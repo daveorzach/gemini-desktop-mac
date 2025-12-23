@@ -50,7 +50,8 @@ class AppCoordinator {
         closeMainWindow()
 
         if let bar = chatBar {
-            // Reuse existing chat bar
+            // Reuse existing chat bar - reposition to current mouse screen
+            repositionChatBarToMouseScreen(bar)
             bar.orderFront(nil)
             bar.makeKeyAndOrderFront(nil)
             bar.checkAndAdjustSize()
@@ -66,8 +67,8 @@ class AppCoordinator {
         let hostingView = NSHostingView(rootView: contentView)
         let bar = ChatBarPanel(contentView: hostingView)
 
-        // Position at bottom center, above the dock
-        if let screen = NSScreen.main {
+        // Position at bottom center of the screen where mouse is located
+        if let screen = screenAtMouseLocation() {
             let screenRect = screen.visibleFrame
             let barSize = bar.frame.size
             let x = screenRect.origin.x + (screenRect.width - barSize.width) / 2
@@ -78,6 +79,24 @@ class AppCoordinator {
         bar.orderFront(nil)
         bar.makeKeyAndOrderFront(nil)
         chatBar = bar
+    }
+
+    /// Returns the screen containing the current mouse cursor location
+    private func screenAtMouseLocation() -> NSScreen? {
+        let mouseLocation = NSEvent.mouseLocation
+        return NSScreen.screens.first { screen in
+            screen.frame.contains(mouseLocation)
+        } ?? NSScreen.main
+    }
+
+    /// Repositions an existing chat bar to the screen containing the mouse cursor
+    private func repositionChatBarToMouseScreen(_ bar: ChatBarPanel) {
+        guard let screen = screenAtMouseLocation() else { return }
+        let screenRect = screen.visibleFrame
+        let barSize = bar.frame.size
+        let x = screenRect.origin.x + (screenRect.width - barSize.width) / 2
+        let y = screenRect.origin.y + Constants.dockOffset
+        bar.setFrameOrigin(NSPoint(x: x, y: y))
     }
 
     func hideChatBar() {
@@ -104,11 +123,17 @@ class AppCoordinator {
     }
 
     func expandToMainWindow() {
+        // Capture the screen where the chat bar is located before hiding it
+        let targetScreen = chatBar.flatMap { bar -> NSScreen? in
+            let center = NSPoint(x: bar.frame.midX, y: bar.frame.midY)
+            return NSScreen.screens.first { $0.frame.contains(center) }
+        } ?? NSScreen.main
+        
         hideChatBar()
-        openMainWindow()
+        openMainWindow(on: targetScreen)
     }
 
-    func openMainWindow() {
+    func openMainWindow(on targetScreen: NSScreen? = nil) {
         // Hide chat bar first - WebView can only be in one view hierarchy
         hideChatBar()
 
@@ -124,10 +149,32 @@ class AppCoordinator {
 
         if let window = mainWindow {
             // Window exists - show it (works for suppressed windows too)
+            if let screen = targetScreen {
+                // Center the window on the target screen
+                let screenFrame = screen.visibleFrame
+                let windowSize = window.frame.size
+                let x = screenFrame.origin.x + (screenFrame.width - windowSize.width) / 2
+                let y = screenFrame.origin.y + (screenFrame.height - windowSize.height) / 2
+                window.setFrameOrigin(NSPoint(x: x, y: y))
+            }
             window.makeKeyAndOrderFront(nil)
         } else if let openWindowAction = openWindowAction {
             // Window doesn't exist yet - use SwiftUI openWindow to create it
             openWindowAction("main")
+            // Position newly created window after a brief delay
+            if let screen = targetScreen {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                    if let window = NSApp.windows.first(where: {
+                        $0.identifier?.rawValue == Constants.mainWindowIdentifier || $0.title == Constants.mainWindowTitle
+                    }) {
+                        let screenFrame = screen.visibleFrame
+                        let windowSize = window.frame.size
+                        let x = screenFrame.origin.x + (screenFrame.width - windowSize.width) / 2
+                        let y = screenFrame.origin.y + (screenFrame.height - windowSize.height) / 2
+                        window.setFrameOrigin(NSPoint(x: x, y: y))
+                    }
+                }
+            }
         }
 
         NSApp.activate(ignoringOtherApps: true)

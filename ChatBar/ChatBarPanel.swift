@@ -20,9 +20,17 @@ class ChatBarPanel: NSPanel, NSWindowDelegate {
         )
     }
 
+    /// Returns the screen where this panel is currently located
+    private var currentScreen: NSScreen? {
+        let panelCenter = NSPoint(x: frame.midX, y: frame.midY)
+        return NSScreen.screens.first { screen in
+            screen.frame.contains(panelCenter)
+        } ?? NSScreen.main
+    }
+
     // Expanded height: 70% of screen height or initial height, whichever is larger
     private var expandedHeight: CGFloat {
-        let screenHeight = NSScreen.main?.visibleFrame.height ?? 800
+        let screenHeight = currentScreen?.visibleFrame.height ?? 800
         return max(screenHeight * Constants.expandedScreenRatio, initialSize.height)
     }
 
@@ -163,6 +171,15 @@ class ChatBarPanel: NSPanel, NSWindowDelegate {
 
         let currentFrame = self.frame
 
+        // Calculate the maximum available height from the current position to the top of the screen
+        guard let screen = currentScreen else { return }
+        let visibleFrame = screen.visibleFrame
+        let maxAvailableHeight = visibleFrame.maxY - currentFrame.origin.y
+        
+        // Use the smaller of expandedHeight and available space, with some padding
+        let targetHeight = min(self.expandedHeight, maxAvailableHeight - Constants.topPadding)
+        let clampedHeight = max(targetHeight, initialSize.height) // Don't shrink below initial size
+
         NSAnimationContext.runAnimationGroup { context in
             context.duration = Constants.animationDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -171,7 +188,7 @@ class ChatBarPanel: NSPanel, NSWindowDelegate {
                 x: currentFrame.origin.x,
                 y: currentFrame.origin.y,
                 width: currentFrame.width,
-                height: self.expandedHeight
+                height: clampedHeight
             )
             self.animator().setFrame(newFrame, display: true)
         }
@@ -269,6 +286,7 @@ extension ChatBarPanel {
         static let pollingInterval: TimeInterval = 1.0
         static let initialPollingDelay: TimeInterval = 3.0
         static let webViewSearchDelay: TimeInterval = 0.5
+        static let topPadding: CGFloat = 20 // Padding from the top of the screen
 
     }
 }
