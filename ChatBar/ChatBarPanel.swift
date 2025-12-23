@@ -23,9 +23,7 @@ class ChatBarPanel: NSPanel, NSWindowDelegate {
     /// Returns the screen where this panel is currently located
     private var currentScreen: NSScreen? {
         let panelCenter = NSPoint(x: frame.midX, y: frame.midY)
-        return NSScreen.screens.first { screen in
-            screen.frame.contains(panelCenter)
-        } ?? NSScreen.main
+        return NSScreen.screen(containing: panelCenter)
     }
 
     // Expanded height: 70% of screen height or initial height, whichever is larger

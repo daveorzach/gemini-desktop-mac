@@ -68,12 +68,9 @@ class AppCoordinator {
         let bar = ChatBarPanel(contentView: hostingView)
 
         // Position at bottom center of the screen where mouse is located
-        if let screen = screenAtMouseLocation() {
-            let screenRect = screen.visibleFrame
-            let barSize = bar.frame.size
-            let x = screenRect.origin.x + (screenRect.width - barSize.width) / 2
-            let y = screenRect.origin.y + Constants.dockOffset
-            bar.setFrameOrigin(NSPoint(x: x, y: y))
+        if let screen = NSScreen.screenAtMouseLocation() {
+            let origin = screen.bottomCenterPoint(for: bar.frame.size, dockOffset: Constants.dockOffset)
+            bar.setFrameOrigin(origin)
         }
 
         bar.orderFront(nil)
@@ -81,22 +78,11 @@ class AppCoordinator {
         chatBar = bar
     }
 
-    /// Returns the screen containing the current mouse cursor location
-    private func screenAtMouseLocation() -> NSScreen? {
-        let mouseLocation = NSEvent.mouseLocation
-        return NSScreen.screens.first { screen in
-            screen.frame.contains(mouseLocation)
-        } ?? NSScreen.main
-    }
-
     /// Repositions an existing chat bar to the screen containing the mouse cursor
     private func repositionChatBarToMouseScreen(_ bar: ChatBarPanel) {
-        guard let screen = screenAtMouseLocation() else { return }
-        let screenRect = screen.visibleFrame
-        let barSize = bar.frame.size
-        let x = screenRect.origin.x + (screenRect.width - barSize.width) / 2
-        let y = screenRect.origin.y + Constants.dockOffset
-        bar.setFrameOrigin(NSPoint(x: x, y: y))
+        guard let screen = NSScreen.screenAtMouseLocation() else { return }
+        let origin = screen.bottomCenterPoint(for: bar.frame.size, dockOffset: Constants.dockOffset)
+        bar.setFrameOrigin(origin)
     }
 
     func hideChatBar() {
@@ -126,9 +112,9 @@ class AppCoordinator {
         // Capture the screen where the chat bar is located before hiding it
         let targetScreen = chatBar.flatMap { bar -> NSScreen? in
             let center = NSPoint(x: bar.frame.midX, y: bar.frame.midY)
-            return NSScreen.screens.first { $0.frame.contains(center) }
+            return NSScreen.screen(containing: center)
         } ?? NSScreen.main
-        
+
         hideChatBar()
         openMainWindow(on: targetScreen)
     }
@@ -143,41 +129,54 @@ class AppCoordinator {
         }
 
         // Find existing main window (may be hidden/suppressed)
-        let mainWindow = NSApp.windows.first(where: {
-            $0.identifier?.rawValue == Constants.mainWindowIdentifier || $0.title == Constants.mainWindowTitle
-        })
+        let mainWindow = findMainWindow()
 
         if let window = mainWindow {
             // Window exists - show it (works for suppressed windows too)
             if let screen = targetScreen {
-                // Center the window on the target screen
-                let screenFrame = screen.visibleFrame
-                let windowSize = window.frame.size
-                let x = screenFrame.origin.x + (screenFrame.width - windowSize.width) / 2
-                let y = screenFrame.origin.y + (screenFrame.height - windowSize.height) / 2
-                window.setFrameOrigin(NSPoint(x: x, y: y))
+                centerWindow(window, on: screen)
             }
             window.makeKeyAndOrderFront(nil)
         } else if let openWindowAction = openWindowAction {
             // Window doesn't exist yet - use SwiftUI openWindow to create it
             openWindowAction("main")
-            // Position newly created window after a brief delay
+            // Position newly created window with retry mechanism
             if let screen = targetScreen {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                    if let window = NSApp.windows.first(where: {
-                        $0.identifier?.rawValue == Constants.mainWindowIdentifier || $0.title == Constants.mainWindowTitle
-                    }) {
-                        let screenFrame = screen.visibleFrame
-                        let windowSize = window.frame.size
-                        let x = screenFrame.origin.x + (screenFrame.width - windowSize.width) / 2
-                        let y = screenFrame.origin.y + (screenFrame.height - windowSize.height) / 2
-                        window.setFrameOrigin(NSPoint(x: x, y: y))
-                    }
-                }
+                centerNewlyCreatedWindow(on: screen)
             }
         }
 
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// Finds the main window by identifier or title
+    private func findMainWindow() -> NSWindow? {
+        NSApp.windows.first {
+            $0.identifier?.rawValue == Constants.mainWindowIdentifier || $0.title == Constants.mainWindowTitle
+        }
+    }
+
+    /// Centers a window on the specified screen
+    private func centerWindow(_ window: NSWindow, on screen: NSScreen) {
+        let origin = screen.centerPoint(for: window.frame.size)
+        window.setFrameOrigin(origin)
+    }
+
+    /// Centers a newly created window on the target screen with retry mechanism
+    private func centerNewlyCreatedWindow(on screen: NSScreen, attempt: Int = 1) {
+        let maxAttempts = 5
+        let retryDelay = 0.05 // 50ms between attempts
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) { [weak self] in
+            guard let self = self else { return }
+
+            if let window = self.findMainWindow() {
+                self.centerWindow(window, on: screen)
+            } else if attempt < maxAttempts {
+                // Window not found yet, retry
+                self.centerNewlyCreatedWindow(on: screen, attempt: attempt + 1)
+            }
+        }
     }
 }
 
