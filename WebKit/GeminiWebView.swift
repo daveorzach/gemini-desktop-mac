@@ -27,9 +27,25 @@ struct GeminiWebView: NSViewRepresentable {
 
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             if navigationAction.targetFrame == nil, let url = navigationAction.request.url {
-                webView.load(URLRequest(url: url))
+                if isExternalURL(url) {
+                    NSWorkspace.shared.open(url)
+                } else {
+                    webView.load(URLRequest(url: url))
+                }
             }
             return nil
+        }
+
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            // Only open external URLs in browser when user clicks a link
+            if navigationAction.navigationType == .linkActivated,
+               let url = navigationAction.request.url,
+               isExternalURL(url) {
+                NSWorkspace.shared.open(url)
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
@@ -124,6 +140,17 @@ struct GeminiWebView: NSViewRepresentable {
             panel.begin { response in
                 completionHandler(response == .OK ? panel.urls : nil)
             }
+        }
+
+        private func isExternalURL(_ url: URL) -> Bool {
+            guard let host = url.host?.lowercased() else { return false }
+            // Allow all Google-owned domains used by Gemini
+            let allowedHostSuffixes = [".google.com", ".googleapis.com", ".googletagmanager.com", ".gstatic.com", ".googlesyndication.com"]
+            if host.hasSuffix(".google.com") || host == "google.com" { return false }
+            for suffix in allowedHostSuffixes {
+                if host.hasSuffix(suffix) || host == String(suffix.dropFirst()) { return false }
+            }
+            return true
         }
     }
 }
