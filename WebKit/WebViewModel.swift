@@ -125,7 +125,7 @@ class WebViewModel {
 
     private static let geminiHost = "gemini.google.com"
     private static let geminiAppPath = "/app"
-    private static let userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+    private static var userAgent: String { UserAgentOption.currentUserAgentString }
     private static let minZoom: Double = 0.6
     private static let maxZoom: Double = 1.4
 
@@ -281,6 +281,13 @@ class WebViewModel {
     private func setZoom(_ zoom: Double) {
         wkWebView.pageZoom = zoom
         UserDefaults.standard.set(zoom, forKey: UserDefaultsKeys.pageZoom.rawValue)
+    }
+
+    func applyUserAgent() {
+        let newUA = Self.userAgent
+        guard wkWebView.customUserAgent != newUA else { return }
+        wkWebView.customUserAgent = newUA
+        wkWebView.reload()
     }
 
     // MARK: - Private Setup
