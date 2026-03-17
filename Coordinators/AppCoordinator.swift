@@ -31,6 +31,7 @@ class AppCoordinator {
     private(set) var injectionBannerMessage: String? = nil
     private(set) var captureProgress: CaptureProgress? = nil
     private(set) var debugCaptureBannerMessage: String? = nil
+    var alwaysOnTop: Bool = UserDefaults.standard.bool(forKey: UserDefaultsKeys.alwaysOnTop.rawValue)
 
     var canGoBack: Bool { webViewModel.canGoBack }
     var canGoForward: Bool { webViewModel.canGoForward }
@@ -61,16 +62,39 @@ class AppCoordinator {
         NSApp.setActivationPolicy(hideDock ? .accessory : .regular)
     }
 
+    // MARK: - Always on Top
+
+    func toggleAlwaysOnTop() {
+        alwaysOnTop.toggle()
+        UserDefaults.standard.set(alwaysOnTop, forKey: UserDefaultsKeys.alwaysOnTop.rawValue)
+        applyAlwaysOnTop()
+    }
+
+    func applyAlwaysOnTop() {
+        let level: NSWindow.Level = alwaysOnTop ? .floating : .normal
+
+        // Apply to main window
+        if let mainWindow = findMainWindow() {
+            mainWindow.level = level
+        }
+
+        // Chat bar panel is always floating by design
+    }
+
+
     // MARK: - Chat Bar
 
     func showChatBar() {
         // Hide main window when showing chat bar
         closeMainWindow()
 
+        let position = PanelPosition.current
+
         if let bar = chatBar {
-            // Reuse existing chat bar - reposition to current mouse screen
-            repositionChatBarToMouseScreen(bar)
-            bar.orderFront(nil)
+            // Reposition unless "Remember last position" is selected
+            if position != .rememberLast {
+                positionChatBar(bar, position: position)
+            }
             bar.makeKeyAndOrderFront(nil)
             bar.checkAndAdjustSize()
             return
@@ -91,22 +115,39 @@ class AppCoordinator {
             }
         )
 
-        // Position at bottom center of the screen where mouse is located
-        if let screen = NSScreen.screenAtMouseLocation() {
-            let origin = screen.bottomCenterPoint(for: bar.frame.size, dockOffset: Constants.dockOffset)
-            bar.setFrameOrigin(origin)
-        }
+        // Position based on setting
+        positionChatBar(bar, position: position)
 
-        bar.orderFront(nil)
         bar.makeKeyAndOrderFront(nil)
         chatBar = bar
     }
 
-    /// Repositions an existing chat bar to the screen containing the mouse cursor
-    private func repositionChatBarToMouseScreen(_ bar: ChatBarPanel) {
-        guard let screen = NSScreen.screenAtMouseLocation() else { return }
-        let origin = screen.bottomCenterPoint(for: bar.frame.size, dockOffset: Constants.dockOffset)
+    /// Positions the chat bar based on the given position setting
+    private func positionChatBar(_ bar: ChatBarPanel, position: PanelPosition) {
+        guard let screen = NSScreen.screenAtMouseLocation() ?? NSScreen.main else { return }
+
+        if position == .rememberLast {
+            let defaults = UserDefaults.standard
+            if defaults.object(forKey: UserDefaultsKeys.panelX.rawValue) != nil,
+               defaults.object(forKey: UserDefaultsKeys.panelY.rawValue) != nil {
+                let saved = NSPoint(x: defaults.double(forKey: UserDefaultsKeys.panelX.rawValue),
+                                    y: defaults.double(forKey: UserDefaultsKeys.panelY.rawValue))
+                let center = NSPoint(x: saved.x + bar.frame.width / 2, y: saved.y + bar.frame.height / 2)
+                if NSScreen.screenStrictly(containing: center) != nil {
+                    bar.setFrameOrigin(saved)
+                    return
+                }
+            }
+        }
+
+        let origin = screen.point(for: bar.frame.size, position: position, dockOffset: Constants.dockOffset)
         bar.setFrameOrigin(origin)
+    }
+
+    /// Repositions the chat bar to its configured position
+    func resetChatBarPosition() {
+        guard let bar = chatBar else { return }
+        positionChatBar(bar, position: PanelPosition.current)
     }
 
     func hideChatBar() {
@@ -167,6 +208,7 @@ class AppCoordinator {
             openWindowAction("main")
         }
 
+        applyAlwaysOnTop()
         NSApp.activate(ignoringOtherApps: true)
     }
 

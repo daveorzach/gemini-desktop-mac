@@ -80,6 +80,19 @@ struct GeminiDesktopApp: App {
                 Divider()
 
                 Button {
+                    coordinator.toggleAlwaysOnTop()
+                } label: {
+                    if coordinator.alwaysOnTop {
+                        Label("Always on Top ✓", systemImage: "pin.fill")
+                    } else {
+                        Label("Always on Top", systemImage: "pin")
+                    }
+                }
+                .keyboardShortcut("t", modifiers: [.command, .shift])
+
+                Divider()
+
+                Button {
                     coordinator.zoomIn()
                 } label: {
                     Label("Zoom In", systemImage: "plus.magnifyingglass")

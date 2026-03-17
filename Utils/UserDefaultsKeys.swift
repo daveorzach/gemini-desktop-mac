@@ -25,6 +25,10 @@ enum UserDefaultsKeys: String {
     case debugModeEnabled
     case userAgentOption
     case customUserAgent
+    case panelPosition
+    case panelX
+    case panelY
+    case alwaysOnTop
 }
 
 enum AppTheme: String, CaseIterable {
@@ -156,5 +160,26 @@ enum UserAgentOption: String, CaseIterable {
         let option = current
         let custom = UserDefaults.standard.string(forKey: UserDefaultsKeys.customUserAgent.rawValue) ?? ""
         return option.userAgentString(custom: custom)
+    }
+}
+
+enum PanelPosition: String, CaseIterable {
+    case bottomLeft
+    case bottomCenter
+    case bottomRight
+    case rememberLast
+
+    var displayName: String {
+        switch self {
+        case .bottomLeft: return "Bottom Left"
+        case .bottomCenter: return "Bottom Center"
+        case .bottomRight: return "Bottom Right"
+        case .rememberLast: return "Remember Last Position"
+        }
+    }
+
+    static var current: PanelPosition {
+        let raw = UserDefaults.standard.string(forKey: UserDefaultsKeys.panelPosition.rawValue) ?? "bottomCenter"
+        return PanelPosition(rawValue: raw) ?? .bottomCenter
     }
 }

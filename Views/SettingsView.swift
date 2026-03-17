@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage(UserDefaultsKeys.debugModeEnabled.rawValue) private var debugModeEnabled: Bool = false
     @AppStorage(UserDefaultsKeys.userAgentOption.rawValue) private var userAgentOption: String = UserAgentOption.safari.rawValue
     @AppStorage(UserDefaultsKeys.customUserAgent.rawValue) private var customUserAgent: String = ""
+    @AppStorage(UserDefaultsKeys.panelPosition.rawValue) private var panelPosition: String = PanelPosition.bottomCenter.rawValue
 
     @State private var showingResetAlert = false
     @State private var isClearing = false
@@ -38,9 +39,25 @@ struct SettingsView: View {
                         NSApp.setActivationPolicy(newValue ? .accessory : .regular)
                     }
             }
-            Section("Keyboard Shortcuts") {
+            Section("Chat Bar") {
                 HStack {
-                    Text("Toggle Chat Bar:")
+                    Label("Position on Screen", systemImage: "rectangle.bottomthird.inset.filled")
+                    Spacer()
+                    Picker("", selection: $panelPosition) {
+                        ForEach([PanelPosition.bottomLeft, .bottomCenter, .bottomRight], id: \.rawValue) { pos in
+                            Text(pos.displayName).tag(pos.rawValue)
+                        }
+                        Divider()
+                        Text(PanelPosition.rememberLast.displayName).tag(PanelPosition.rememberLast.rawValue)
+                    }
+                    .labelsHidden()
+                    .frame(width: 200)
+                    .onChange(of: panelPosition) { _, _ in
+                        coordinator.resetChatBarPosition()
+                    }
+                }
+                HStack {
+                    Label("Keyboard Shortcut", systemImage: "command")
                     Spacer()
                     KeyboardShortcuts.Recorder(for: .bringToFront)
                 }

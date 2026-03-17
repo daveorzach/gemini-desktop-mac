@@ -8,6 +8,53 @@
 import SwiftUI
 import WebKit
 
+/// An invisible drag region that initiates window dragging on mouseDown
+struct WindowDragView: NSViewRepresentable {
+    func makeNSView(context: Context) -> WindowDragNSView {
+        WindowDragNSView()
+    }
+
+    func updateNSView(_ nsView: WindowDragNSView, context: Context) {}
+}
+
+class WindowDragNSView: NSView {
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setupTrackingArea()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupTrackingArea()
+    }
+
+    private func setupTrackingArea() {
+        let area = NSTrackingArea(
+            rect: .zero,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self
+        )
+        addTrackingArea(area)
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        NSCursor.openHand.set()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        NSCursor.arrow.set()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        NSCursor.closedHand.set()
+        window?.performDrag(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        NSCursor.openHand.set()
+    }
+}
+
 struct ChatBarView: View {
     let webView: WKWebView
     let onExpandToMain: () -> Void
@@ -27,6 +74,7 @@ struct ChatBarView: View {
         ZStack(alignment: .topLeading) {
             GeminiWebView(webView: webView)
 
+            // Expand button
             Button(action: onExpandToMain) {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
                     .font(.system(size: 14, weight: .medium))
@@ -38,6 +86,27 @@ struct ChatBarView: View {
             .buttonStyle(.plain)
             .padding(16)
             .offset(buttonOffset)
+
+            // Invisible drag region in the top bar (between Gemini text and PRO badge)
+            VStack {
+                HStack {
+                    Spacer()
+                        .frame(width: Constants.dragRegionLeading)
+                    WindowDragView()
+                        .frame(maxWidth: .infinity, maxHeight: Constants.dragRegionHeight)
+                    Spacer()
+                        .frame(width: Constants.dragRegionTrailing)
+                }
+                .padding(.top, Constants.dragRegionTopPadding)
+                Spacer()
+            }
         }
+    }
+
+    private enum Constants {
+        static let dragRegionLeading: CGFloat = 160  // skip past expand button + "Gemini" text
+        static let dragRegionTrailing: CGFloat = 120  // skip past PRO badge + avatar
+        static let dragRegionHeight: CGFloat = 38
+        static let dragRegionTopPadding: CGFloat = 16
     }
 }
