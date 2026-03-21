@@ -34,7 +34,7 @@ class ChatBarPanel: NSPanel, NSWindowDelegate {
 
     private var isExpanded = false
     private var pollingTimer: (any Sendable)?
-    private var positionSaveWork: DispatchWorkItem?
+    nonisolated(unsafe) private var positionSaveWork: DispatchWorkItem?
     let webView: WKWebView
     private let onOpenNewChat: () -> Void
 
