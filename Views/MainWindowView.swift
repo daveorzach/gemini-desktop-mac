@@ -52,15 +52,6 @@ struct MainWindowView: View {
                     PromptsMenuButton(coordinator: coordinator, injectionMode: promptInjectionMode)
                         .help("Insert Saved Prompt")
                 }
-
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        minimizeToPrompt()
-                    } label: {
-                        Image(systemName: "arrow.down.right.and.arrow.up.left")
-                    }
-                    .help("Minimize to Prompt Panel")
-                }
             }
             .overlay(alignment: .top) {
                 VStack(spacing: 8) {
@@ -139,11 +130,6 @@ struct MainWindowView: View {
 
     private func applyColorToAllWindows() {
         mainWindows.forEach { applyColor(to: $0) }
-    }
-
-    private func minimizeToPrompt() {
-        mainWindows.first?.orderOut(nil)
-        coordinator.showChatBar()
     }
 
     private func revealDebugCaptures() {
