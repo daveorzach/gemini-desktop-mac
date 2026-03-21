@@ -11,7 +11,6 @@ struct SettingsView: View {
     @AppStorage(UserDefaultsKeys.appTheme.rawValue) private var appTheme: String = AppTheme.system.rawValue
     @AppStorage(UserDefaultsKeys.useCustomToolbarColor.rawValue) private var useCustomToolbarColor: Bool = false
     @AppStorage(UserDefaultsKeys.toolbarColorHex.rawValue) private var toolbarColorHex: String = "#34A853"
-    @AppStorage(UserDefaultsKeys.promptInjectionMode.rawValue) private var promptInjectionMode: String = "copy"
     @AppStorage(UserDefaultsKeys.debugModeEnabled.rawValue) private var debugModeEnabled: Bool = false
 
     @State private var showingResetAlert = false
@@ -124,18 +123,6 @@ struct SettingsView: View {
                     Button("Choose…") {
                         chooseDirectory(label: $artifactsDirLabel, key: .artifactsDirectoryBookmark)
                     }
-                }
-
-                HStack {
-                    Text("Injection Mode")
-                    Spacer()
-                    Picker("", selection: $promptInjectionMode) {
-                        Text("Copy to Clipboard").tag("copy")
-                        Text("Inject into Gemini").tag("inject")
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.segmented)
-                    .frame(width: 260)
                 }
 
                 HStack {
