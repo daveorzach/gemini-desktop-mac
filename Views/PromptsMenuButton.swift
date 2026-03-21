@@ -9,6 +9,8 @@ struct PromptsMenuButton: View {
     var coordinator: AppCoordinator
     var injectionMode: String
 
+    @AppStorage(UserDefaultsKeys.showPromptMetadata.rawValue) private var showPromptMetadata: Bool = false
+
     var body: some View {
         Menu {
             ForEach(coordinator.promptLibrary.rootNodes, id: \.id) { node in
@@ -35,17 +37,44 @@ struct PromptsMenuButton: View {
         }
     }
 
+    private func metadataDetails(for metadata: PromptMetadata) -> [String] {
+        var lines: [String] = []
+        lines.append("Summary: \(metadata.summary)")
+        if !metadata.tags.isEmpty {
+            lines.append("Tags: \(metadata.tags.joined(separator: ", "))")
+        }
+        var versionLine = "v\(metadata.version)"
+        if let updated = metadata.lastUpdated { versionLine += " · \(updated)" }
+        lines.append(versionLine)
+        return lines
+    }
+
     @ViewBuilder
     private func fileMenuButton(for file: PromptFile) -> some View {
         let isDeprecated = file.metadata?.deprecated == true
 
-        if let tooltip = file.tooltipContent {
-            Button(file.displayTitle, action: { handleSelection(file) })
-                .foregroundStyle(isDeprecated ? Color.secondary : Color.primary)
-                .help(tooltip.formatted())
-        } else {
-            Button(file.displayTitle, action: { handleSelection(file) })
-                .foregroundStyle(isDeprecated ? Color.secondary : Color.primary)
+        Button(file.displayTitle, action: { handleSelection(file) })
+            .foregroundStyle(isDeprecated ? Color.secondary : Color.primary)
+
+        if showPromptMetadata {
+            if let metadata = file.metadata {
+                // Disabled role item — acts as subtitle
+                Button(metadata.role) {}
+                    .disabled(true)
+
+                // ⓘ Details submenu with summary, tags, version
+                Menu {
+                    ForEach(Array(metadataDetails(for: metadata).enumerated()), id: \.offset) { _, detail in
+                        Button(detail) {}
+                            .disabled(true)
+                    }
+                } label: {
+                    Label("Details", systemImage: "info.circle")
+                }
+            } else if file.yamlParseError {
+                Button("YAML error — required fields missing") {}
+                    .disabled(true)
+            }
         }
     }
 
