@@ -22,15 +22,11 @@ struct GeminiDesktopApp: App {
     @State var coordinator = AppCoordinator()
     @Environment(\.openWindow) private var openWindow
 
-    @AppStorage(UserDefaultsKeys.useCustomToolbarColor.rawValue) private var useCustomToolbarColor: Bool = false
-    @AppStorage(UserDefaultsKeys.toolbarColorHex.rawValue) private var toolbarColorHex: String = "#34A853"
     @AppStorage(UserDefaultsKeys.debugModeEnabled.rawValue) private var debugModeEnabled: Bool = false
 
     var body: some Scene {
         WindowGroup(AppCoordinator.Constants.mainWindowTitle, id: Constants.mainWindowID) {
             MainWindowView(coordinator: $coordinator)
-                .toolbarBackground(useCustomToolbarColor ? (Color(toolbarColorHex) ?? .clear) : Color(nsColor: Constants.toolbarColor), for: .windowToolbar)
-                .toolbarBackground(.visible, for: .windowToolbar)
                 .frame(minWidth: Constants.mainWindowMinWidth, minHeight: Constants.mainWindowMinHeight)
                 .onAppear { appDelegate.coordinator = coordinator }
         }

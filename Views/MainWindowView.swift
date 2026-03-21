@@ -14,6 +14,14 @@ struct MainWindowView: View {
     @AppStorage(UserDefaultsKeys.useCustomToolbarColor.rawValue) private var useCustomToolbarColor: Bool = false
     @AppStorage(UserDefaultsKeys.toolbarColorHex.rawValue) private var toolbarColorHex: String = "#34A853"
     @AppStorage(UserDefaultsKeys.promptInjectionMode.rawValue) private var promptInjectionMode: String = "copy"
+    @State private var fullScreenToken: Bool = false
+
+    private var currentToolbarColor: Color {
+        _ = fullScreenToken  // read so SwiftUI re-evaluates this when token toggles
+        return useCustomToolbarColor
+            ? (Color(toolbarColorHex) ?? .clear)
+            : Color(nsColor: GeminiDesktopApp.Constants.toolbarColor)
+    }
 
     var body: some View {
         GeminiWebView(webView: coordinator.webViewModel.wkWebView)
@@ -25,8 +33,6 @@ struct MainWindowView: View {
                     openWindow(id: id)
                 }
             }
-            .onChange(of: useCustomToolbarColor) { _, _ in applyColorToAllWindows() }
-            .onChange(of: toolbarColorHex) { _, _ in applyColorToAllWindows() }
             .toolbar {
                 if coordinator.canGoBack {
                     ToolbarItem(placement: .navigation) {
@@ -109,27 +115,20 @@ struct MainWindowView: View {
             .animation(.easeInOut(duration: 0.2), value: coordinator.injectionBannerMessage)
             .animation(.easeInOut(duration: 0.2), value: coordinator.captureProgress)
             .animation(.easeInOut(duration: 0.2), value: coordinator.debugCaptureBannerMessage)
-    }
-
-    private var mainWindows: [NSWindow] {
-        coordinator.findMainWindow().map { [$0] } ?? []
+            .toolbarBackground(currentToolbarColor, for: .windowToolbar)
+            .toolbarBackground(.visible, for: .windowToolbar)
+            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in
+                fullScreenToken.toggle()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didExitFullScreenNotification)) { _ in
+                fullScreenToken.toggle()
+            }
     }
 
     private func setupWindowAppearance(_ window: NSWindow) {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.collectionBehavior.insert(.fullScreenPrimary)
-        applyColor(to: window)
-    }
-
-    private func applyColor(to window: NSWindow) {
-        // Toolbar color is applied via SwiftUI's .toolbarBackground() modifier.
-        // Do not set window.backgroundColor as it fills the entire content area
-        // and covers the WebView during initial load.
-    }
-
-    private func applyColorToAllWindows() {
-        mainWindows.forEach { applyColor(to: $0) }
     }
 
     private func revealDebugCaptures() {
