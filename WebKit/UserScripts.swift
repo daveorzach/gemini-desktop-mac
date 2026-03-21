@@ -201,19 +201,23 @@ enum UserScripts {
     })();
     """
 
-    /// JavaScript to fix IME double-enter issue on Gemini
-    /// When using IME (e.g., Chinese/Japanese input), pressing Enter after completing
-    /// composition would require a second Enter to send. This script detects when
-    /// IME composition just ended and automatically clicks the send button.
-    /// Only activates Enter-key interception after IME usage is detected.
-    /// https://update.greasyfork.org/scripts/532717/阻止Gemini两次点击.user.js
+    /// JavaScript to fix IME Enter issue on Gemini
+    /// When using IME (e.g., Chinese/Japanese input), pressing Enter to confirm
+    /// the IME composition should NOT send the message. This script intercepts
+    /// Enter keydown events during and immediately after IME composition,
+    /// preventing them from reaching Gemini's send handler.
     private static let imeFixSource = """
     (function() {
         'use strict';
 
         let imeActive = false;
         let imeEverUsed = false;
-        let imeJustEnded = false;
+        let compositionEndTime = 0;
+        const BUFFER_TIME = 300;
+
+        function isInIMEWindow() {
+            return imeActive || (Date.now() - compositionEndTime < BUFFER_TIME);
+        }
 
         document.addEventListener('compositionstart', function() {
             imeActive = true;
@@ -222,32 +226,26 @@ enum UserScripts {
 
         document.addEventListener('compositionend', function() {
             imeActive = false;
-            imeJustEnded = true;
-            requestAnimationFrame(() => { imeJustEnded = false; });
+            compositionEndTime = Date.now();
         }, true);
-
-        function findAndClickSendButton() {
-            const button = document.querySelector('button:has(.send-button-icon)');
-            if (button && !button.disabled && button.offsetParent !== null) {
-                button.click();
-                return true;
-            }
-            return false;
-        }
 
         document.addEventListener('keydown', function(e) {
             if (!imeEverUsed) return;
-            // First keydown after compositionend: if it's not Enter,
-            // the composition was ended by another key (e.g. Space) — clear the flag
-            if (imeJustEnded && e.key !== 'Enter') {
-                imeJustEnded = false;
+            if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey) return;
+
+            if (isInIMEWindow() || e.isComposing || e.keyCode === 229) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
             }
-            if (imeActive || imeJustEnded || e.isComposing || e.keyCode === 229) return;
-            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
-                if (findAndClickSendButton()) {
-                    e.stopImmediatePropagation();
-                    e.preventDefault();
-                }
+        }, true);
+
+        document.addEventListener('beforeinput', function(e) {
+            if (!imeEverUsed) return;
+            if (e.inputType !== 'insertParagraph' && e.inputType !== 'insertLineBreak') return;
+
+            if (isInIMEWindow()) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
             }
         }, true);
     })();
