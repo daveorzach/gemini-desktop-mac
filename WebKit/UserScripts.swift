@@ -79,8 +79,8 @@ enum UserScripts {
     /// Returns a JSON string. Each field is individually wrapped in try/catch.
     /// All extraction expressions are sourced from GeminiSelectors.shared.metadata
     /// (user-patchable via gemini-selectors.json — no recompile needed for selector updates).
-    /// GeminiSelectors.shared is backed by a static let — safe from nonisolated context.
-    nonisolated static func createMetadataScript() -> String {
+    /// Requires @MainActor context to access GeminiSelectors.shared.
+    @MainActor static func createMetadataScript() -> String {
         let entries = GeminiSelectors.shared.metadata
         var blocks: [String] = []
 
@@ -137,7 +137,7 @@ enum UserScripts {
     /// Generates the metadataProbe JS — one IIFE per metadata field.
     /// Uses eval (safe: evaluateJavaScript bypasses page CSP; expressions come from GeminiSelectors, not page).
     /// Array-valued fields (attachments) use JSON.stringify for the value.
-    nonisolated private static func metadataProbeBlocks() -> String {
+    @MainActor private static func metadataProbeBlocks() -> String {
         let entries = GeminiSelectors.shared.metadata
         var blocks: [String] = []
 
@@ -388,7 +388,8 @@ enum UserScripts {
 
     /// DOM capture: selector probe + all data-test-id elements + structural data-ved/jsaction nodes.
     /// selectorJSON: JSON string of { fieldName: cssSelector } pairs built by AppCoordinator.
-    nonisolated static func createDOMCaptureScript(selectorJSON: String) -> String {
+    /// Requires @MainActor context to access GeminiSelectors.shared via metadataProbeBlocks().
+    @MainActor static func createDOMCaptureScript(selectorJSON: String) -> String {
         """
         (function() {
             try {
