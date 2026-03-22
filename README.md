@@ -17,7 +17,7 @@ An **unofficial macOS desktop wrapper** for Google Gemini (`https://gemini.googl
 
 A lightweight overlay panel that stays on top of all your apps, so you can access Gemini without switching windows.
 
-![Chat Bar](docs/chat_bar.png)
+<img src="docs/chat_bar.png" width="546" alt="Chat Bar">
 
 - Stays on top of all apps
 - Configurable panel size and position
@@ -43,7 +43,7 @@ Keep a folder of reusable `.md` prompt files and insert them into Gemini from th
 ![Prompt Library](docs/prompt_library.png)
 
 - Toolbar menu lists all prompts in a user-chosen folder
-- Two injection modes: **Copy** (copies to clipboard) or **Inject** (types directly into Gemini's input)
+- Copies prompt to clipboard, ready to paste into Gemini
 - Supports nested folders (shown as submenus)
 - Prompts can include metadata (title, description, deprecated flag) via YAML frontmatter
 
