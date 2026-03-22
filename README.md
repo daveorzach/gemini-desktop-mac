@@ -1,6 +1,6 @@
 # Gemini Desktop for macOS (Unofficial)
 
-An **unofficial macOS desktop wrapper** for Google Gemini, built as a lightweight desktop app that loads the official Gemini website.
+An **unofficial macOS desktop wrapper** for Google Gemini (`https://gemini.google.com/app`).
 
 ![Desktop](docs/desktop.png)
 
@@ -16,20 +16,64 @@ An **unofficial macOS desktop wrapper** for Google Gemini, built as a lightweigh
 ## Features
 
 ### Floating Chat Bar
-- **Quick Access Panel** - A floating window that stays on top of all apps
 
-### Global Keyboard Shortcut
-- **Toggle Chat Bar** - Set your own shortcut in Settings to instantly show/hide the chat bar from any app
-- Configurable via visual keyboard recorder in preferences
+A lightweight overlay panel that stays on top of all your apps, so you can access Gemini without switching windows.
 
-### Other Features
-- Native macOS desktop experience
-- Lightweight WebView wrapper
-- Adjustable text size (80%-120%)
-- Camera & microphone support for Gemini features
-- Uses the official Gemini web interface
-- No tracking, no data collection
-- Open source
+![Chat Bar](docs/chat_bar.png)
+
+- Stays on top of all apps
+- Configurable panel size and position
+- Always-on-top toggle (pin/unpin)
+- Global keyboard shortcut to show/hide from any app (configurable in Settings)
+- Adjustable text size (80%–120%)
+- Camera and microphone support for Gemini Live features
+
+### Artifact Capture
+
+Save any Gemini response as a Markdown file with one click.
+
+![Artifact Capture](docs/artifact_capture.png)
+
+- Toolbar button captures the last response
+- Save sheet shows an editable filename and a metadata preview (model, request, conversation URL, timestamp) before writing
+- Saves to a user-chosen Artifacts folder
+
+### Prompt Library
+
+Keep a folder of reusable `.md` prompt files and insert them into Gemini from the toolbar.
+
+![Prompt Library](docs/prompt_library.png)
+
+- Toolbar menu lists all prompts in a user-chosen folder
+- Two injection modes: **Copy** (copies to clipboard) or **Inject** (types directly into Gemini's input)
+- Supports nested folders (shown as submenus)
+- Prompts can include metadata (title, description, deprecated flag) via YAML frontmatter
+
+---
+
+## Settings & Customization
+
+### Appearance
+- Light / Dark / System theme
+- Custom toolbar color
+- Text size (80%–120%)
+
+### Chat Bar
+- Panel position: fixed or floating
+- Always on Top toggle
+- Minimize to Prompt toolbar button (optional, disabled by default)
+- Configurable global keyboard shortcut
+
+### Prompts & Artifacts
+- **Prompts folder** — `.md` files in this folder appear in the Insert Prompt menu
+- **Artifacts folder** — captured responses are saved here as Markdown files
+- **Custom metadata selectors** — override the bundled JS expressions used to extract model, request, and URL from the Gemini page
+
+### Advanced
+- User agent: Safari, Chrome, or custom string
+- Hide dock icon
+- Hide window at launch
+- Debug mode
 
 ---
 
@@ -38,6 +82,8 @@ An **unofficial macOS desktop wrapper** for Google Gemini, built as a lightweigh
 **This app is:**
 - A thin desktop wrapper around `https://gemini.google.com`
 - A convenience app for macOS users
+- No tracking, no data collection
+- Open source
 
 **This app is NOT:**
 - An official Gemini client
@@ -75,6 +121,6 @@ All functionality is provided entirely by the Gemini web app itself.
 ```bash
 git clone https://github.com/alexcding/gemini-desktop-mac.git
 cd gemini-desktop-mac
-open GeminiMac.xcodeproj
+open GeminiDesktop.xcodeproj
 # Build and run in Xcode
 ```
