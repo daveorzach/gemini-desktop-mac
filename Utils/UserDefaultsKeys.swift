@@ -21,11 +21,11 @@ enum UserDefaultsKeys: String {
     case promptsDirectoryBookmark
     case artifactsDirectoryBookmark
     case promptInjectionMode   // "copy" | "inject"
-    case showPromptMetadata    // Bool, default false
     case debugModeEnabled
     case userAgentOption
     case customUserAgent
     case panelPosition
+    case minimizeToPrompt      // Bool, default false
     case panelX
     case panelY
     case alwaysOnTop
