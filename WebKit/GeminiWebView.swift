@@ -191,7 +191,7 @@ class WebViewContainer: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window != nil && window?.isKeyWindow == true {
+        if window != nil && (window?.isKeyWindow == true || webView.superview == nil) {
             attachWebView()
         }
     }

@@ -8,45 +8,42 @@ import AppKit
 
 struct ArtifactCaptureButton: View {
     var coordinator: AppCoordinator
-    @State private var showingSheet = false
     @State private var filenameInput = ""
-    @State private var prefetchedMetadata: ArtifactMetadata? = nil
+    @State private var captureSheet: CaptureSheet? = nil
 
     var body: some View {
         Button(action: {
             Task {
-                // Pre-fetch metadata before opening the sheet so the disclosure group is populated.
-                // fetchMetadataPreview() never throws and completes in <50ms.
-                prefetchedMetadata = await coordinator.fetchMetadataPreview()
-                showingSheet = true
+                let metadata = await coordinator.fetchMetadataPreview()
+                captureSheet = CaptureSheet(metadata: metadata)
             }
         }) {
             Image(systemName: "square.and.arrow.down.on.square")
         }
         .disabled(coordinator.captureProgress != nil)
-        .sheet(isPresented: $showingSheet) {
-            // prefetchedMetadata is always set before showingSheet = true.
-            // ArtifactMetadata.empty() is a defensive fallback that should never be reached.
-            let metadata = prefetchedMetadata ?? ArtifactMetadata.empty()
+        .sheet(item: $captureSheet) { item in
             FilenameInputSheet(
-                isPresented: $showingSheet,
                 filename: $filenameInput,
                 initialFilename: coordinator.defaultArtifactFilename(),
-                metadata: metadata,
+                metadata: item.metadata,
                 onSave: {
                     coordinator.captureLastResponse(
                         suggestedFilename: filenameInput,
-                        previewMetadata: metadata
+                        previewMetadata: item.metadata
                     )
-                    showingSheet = false
                 }
             )
         }
     }
+
+    private struct CaptureSheet: Identifiable {
+        let id = UUID()
+        let metadata: ArtifactMetadata
+    }
 }
 
 private struct FilenameInputSheet: View {
-    @Binding var isPresented: Bool
+    @Environment(\.dismiss) private var dismiss
     @Binding var filename: String
     let initialFilename: String
     let metadata: ArtifactMetadata
@@ -72,12 +69,13 @@ private struct FilenameInputSheet: View {
 
             HStack(spacing: 12) {
                 Button("Cancel") {
-                    isPresented = false
+                    dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
 
                 Button("Save") {
                     onSave()
+                    dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(filename.trimmingCharacters(in: .whitespaces).isEmpty)

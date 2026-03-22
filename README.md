@@ -4,8 +4,6 @@ An **unofficial macOS desktop wrapper** for Google Gemini (`https://gemini.googl
 
 ![Desktop](docs/desktop.png)
 
-![Chat Bar](docs/chat_bar.png)
-
 > **Disclaimer:**
 > This project is **not affiliated with, endorsed by, or sponsored by Google**.
 > "Gemini" is a trademark of **Google LLC**.
