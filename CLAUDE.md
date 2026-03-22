@@ -63,3 +63,16 @@ The app uses Google's official Gemini colors for the toolbar: `#34A853` (light) 
 ## GeminiSelectors
 
 `GeminiSelectors` is a `@MainActor` singleton that loads JS selector expressions from JSON. It supports a user override file at `~/Library/Application Support/GeminiDesktop/gemini-selectors.json` (takes priority over the bundled default). Call `GeminiSelectors.reload()` after the user edits or resets the selector file — SettingsView does this automatically in `.onDisappear`.
+
+## GitHub Repository
+
+**Enabled settings:** Private vulnerability reporting, Dependabot alerts, Discussions.
+
+**Remotes:** `origin` → `daveorzach/gemini-desktop-mac` (push/pull here). `alexcding` → `alexcding/gemini-desktop-mac` (fetch-only, push blocked — use `git fetch alexcding` to sync upstream changes, then cherry-pick).
+
+**When to suggest GitHub features:**
+- New automation opportunity (release tagging, DMG build) → suggest GitHub Actions
+- Multiple contributors or PRs → suggest branch protection rulesets
+- Dependency CVE or version drift → Dependabot is already enabled
+- Community growing → suggest GitHub Discussions (already enabled) or a pinned discussion for FAQs
+- CI value becomes clear (e.g. a test suite is added) → suggest CodeQL or build-check workflow
