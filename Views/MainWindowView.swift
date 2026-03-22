@@ -14,24 +14,22 @@ struct MainWindowView: View {
     @AppStorage(UserDefaultsKeys.useCustomToolbarColor.rawValue) private var useCustomToolbarColor: Bool = false
     @AppStorage(UserDefaultsKeys.toolbarColorHex.rawValue) private var toolbarColorHex: String = "#34A853"
     @AppStorage(UserDefaultsKeys.promptInjectionMode.rawValue) private var promptInjectionMode: String = "copy"
-    @State private var fullScreenToken: Bool = false
-
-    private var currentToolbarColor: Color {
-        _ = fullScreenToken  // read so SwiftUI re-evaluates this when token toggles
-        return useCustomToolbarColor
-            ? (Color(toolbarColorHex) ?? .clear)
-            : Color(nsColor: GeminiDesktopApp.Constants.toolbarColor)
-    }
+    @AppStorage(UserDefaultsKeys.minimizeToPrompt.rawValue) private var minimizeToPrompt: Bool = false
 
     var body: some View {
         GeminiWebView(webView: coordinator.webViewModel.wkWebView)
-            .background(WindowAccessor { window in
-                setupWindowAppearance(window)
-            })
+            .background(WindowAccessor(onWindowReceived: { window in
+                updateWindowAppearance(window)
+            }))
             .onAppear {
                 coordinator.openWindowAction = { id in
                     openWindow(id: id)
                 }
+            }
+            .onChange(of: useCustomToolbarColor) { _, _ in updateAllWindows() }
+            .onChange(of: toolbarColorHex) { _, _ in updateAllWindows() }
+            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in
+                updateAllWindows()
             }
             .toolbar {
                 if coordinator.canGoBack {
@@ -47,6 +45,17 @@ struct MainWindowView: View {
 
                 ToolbarItem(placement: .principal) {
                     Spacer()
+                }
+
+                if minimizeToPrompt {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            coordinator.showChatBar()
+                        } label: {
+                            Image(systemName: "rectangle.compress.vertical")
+                        }
+                        .help("Minimize to Prompt")
+                    }
                 }
 
                 ToolbarItem(placement: .primaryAction) {
@@ -115,20 +124,28 @@ struct MainWindowView: View {
             .animation(.easeInOut(duration: 0.2), value: coordinator.injectionBannerMessage)
             .animation(.easeInOut(duration: 0.2), value: coordinator.captureProgress)
             .animation(.easeInOut(duration: 0.2), value: coordinator.debugCaptureBannerMessage)
-            .toolbarBackground(currentToolbarColor, for: .windowToolbar)
-            .toolbarBackground(.visible, for: .windowToolbar)
-            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in
-                fullScreenToken.toggle()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didExitFullScreenNotification)) { _ in
-                fullScreenToken.toggle()
-            }
     }
 
-    private func setupWindowAppearance(_ window: NSWindow) {
+    private func updateWindowAppearance(_ window: NSWindow) {
+        if useCustomToolbarColor, let color = Color(toolbarColorHex) {
+            window.backgroundColor = NSColor(color)
+        } else {
+            window.backgroundColor = GeminiDesktopApp.Constants.toolbarColor
+        }
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.collectionBehavior.insert(.fullScreenPrimary)
+        if !window.collectionBehavior.contains(.fullScreenPrimary) {
+            window.collectionBehavior.insert(.fullScreenPrimary)
+        }
+    }
+
+    private func updateAllWindows() {
+        for window in NSApp.windows {
+            if (window.identifier?.rawValue == AppCoordinator.Constants.mainWindowIdentifier ||
+                window.title == AppCoordinator.Constants.mainWindowTitle) && !(window is NSPanel) {
+                updateWindowAppearance(window)
+            }
+        }
     }
 
     private func revealDebugCaptures() {
@@ -213,19 +230,23 @@ struct MainWindowView: View {
     }
 }
 
-// Helper to access NSWindow from SwiftUI for one-time setup
+// Helper to access NSWindow from SwiftUI
 struct WindowAccessor: NSViewRepresentable {
-    var onWindowAvailable: (NSWindow) -> Void
+    var onWindowReceived: (NSWindow) -> Void
 
     func makeNSView(context: Context) -> NSView {
         let nsView = NSView()
         DispatchQueue.main.async {
             if let window = nsView.window {
-                onWindowAvailable(window)
+                onWindowReceived(window)
             }
         }
         return nsView
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if let window = nsView.window {
+            onWindowReceived(window)
+        }
+    }
 }
