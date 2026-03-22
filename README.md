@@ -42,10 +42,13 @@ Keep a folder of reusable `.md` prompt files and insert them into Gemini from th
 
 ![Prompt Library](docs/prompt_library.png)
 
-- Toolbar menu lists all prompts in a user-chosen folder
-- Copies prompt to clipboard, ready to paste into Gemini
+**Setup:** Go to Settings → Prompts & Artifacts and choose a folder. Any `.md` files in that folder appear in the toolbar menu instantly.
+
+**Using a prompt:** Click the prompt menu button in the toolbar, select a prompt — it copies to your clipboard. Paste it into Gemini's input field.
+
 - Supports nested folders (shown as submenus)
-- Prompts can include metadata (title, description, deprecated flag) via YAML frontmatter
+- Prompts can include a title, description, and deprecated flag via YAML frontmatter
+- The folder is watched live — add or edit files and they appear without restarting
 
 ---
 
