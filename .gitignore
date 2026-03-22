@@ -87,3 +87,11 @@ Share/iOS/.DS_Store
 Share/.DS_Store
 .DS_Store
 .worktrees
+
+# Superpowers workflow docs (plans, specs, brainstorming artifacts)
+docs/superpowers/
+
+# Internal artifact capture logs and debug files
+docs/artifacts/
+docs/dump_debug.md
+docs/err-green_launch.png
