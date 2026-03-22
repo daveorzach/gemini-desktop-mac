@@ -54,8 +54,9 @@ struct GeminiSelectors: Codable {
 
     // MARK: - Loading
 
-    /// Computed once at first access. Returns (selectors, fromUserFile).
-    private static let _loaded: (selectors: GeminiSelectors, fromUserFile: Bool) = {
+    private nonisolated(unsafe) static var _loaded: (selectors: GeminiSelectors, fromUserFile: Bool) = GeminiSelectors.loadOnce()
+
+    private static func loadOnce() -> (selectors: GeminiSelectors, fromUserFile: Bool) {
         // Priority 1: user override at ~/Library/Application Support/GeminiDesktop/
         if let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory, in: .userDomainMask
@@ -79,11 +80,18 @@ struct GeminiSelectors: Codable {
             return (.default, false)
         }
         return (loaded, false)
-    }()
+    }
+
+    /// Re-reads the user override file (or falls back to bundle).
+    /// Call after the user edits the selector file so the next artifact capture
+    /// picks up the new expressions without a full app restart.
+    static func reload() {
+        _loaded = loadOnce()
+    }
 
     static var shared: GeminiSelectors { _loaded.selectors }
 
-    /// True if a valid user override file was found at launch.
+    /// True if a valid user override file was found.
     static var isUsingUserFile: Bool { _loaded.fromUserFile }
 
     // MARK: - Hardcoded fallback (used only if JSON is missing or corrupt)
