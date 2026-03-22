@@ -121,3 +121,11 @@ cd gemini-desktop-mac
 open GeminiDesktop.xcodeproj
 # Build and run in Xcode
 ```
+
+---
+
+## License
+
+[CC BY-NC 4.0](LICENSE) — Non-commercial use only.
+
+This project is a fork of [gemini-desktop-mac](https://github.com/alexcding/gemini-desktop-mac) by [alexcding](https://github.com/alexcding). Original work copyright © 2025 alexcding. Fork contributions copyright © 2026 daveorzach.
