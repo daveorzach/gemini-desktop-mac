@@ -311,7 +311,8 @@ struct SettingsView: View {
             return
         }
 
-        // Refresh the displayed source label
+        // Refresh the displayed source label (reload first so isUsingUserFile reflects current disk state)
+        GeminiSelectors.reload()
         selectorSource = GeminiSelectors.isUsingUserFile ? "Custom (user file)" : "Default (bundled)"
     }
 }
