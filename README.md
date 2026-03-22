@@ -79,14 +79,13 @@ Keep a folder of reusable `.md` prompt files and insert them into Gemini from th
 
 **This app is:**
 - A thin desktop wrapper around `https://gemini.google.com`
-- A convenience app for macOS users
-- No tracking, no data collection
-- Open source
+- A convenience app for macOS users with native enhancements (Artifact Capture, Prompt Library)
+- Open source, no tracking, no data collection
 
 **This app is NOT:**
 - An official Gemini client
 - A replacement for Google's website
-- A modified or enhanced version of Gemini
+- A modification of the Gemini web app itself
 - A Google-authored product
 
 All functionality is provided entirely by the Gemini web app itself.
@@ -105,7 +104,7 @@ All functionality is provided entirely by the Gemini web app itself.
 
 ## System Requirements
 
-- **macOS 14.0 (Sonoma)** or later
+- **macOS 15.0 (Sequoia)** or later
 
 ---
 
@@ -117,7 +116,7 @@ All functionality is provided entirely by the Gemini web app itself.
 
 ### Build from Source
 ```bash
-git clone https://github.com/alexcding/gemini-desktop-mac.git
+git clone https://github.com/daveozach/gemini-desktop-mac.git
 cd gemini-desktop-mac
 open GeminiDesktop.xcodeproj
 # Build and run in Xcode
