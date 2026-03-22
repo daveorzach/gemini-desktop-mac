@@ -56,7 +56,7 @@ struct GeminiSelectors: Codable {
 
     @MainActor private static var _loaded: (selectors: GeminiSelectors, fromUserFile: Bool) = GeminiSelectors.load()
 
-    private static func load() -> (selectors: GeminiSelectors, fromUserFile: Bool) {
+    @MainActor private static func load() -> (selectors: GeminiSelectors, fromUserFile: Bool) {
         // Priority 1: user override at ~/Library/Application Support/GeminiDesktop/
         if let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory, in: .userDomainMask

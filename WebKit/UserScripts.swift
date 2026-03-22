@@ -34,6 +34,9 @@ enum UserScripts {
         scripts.insert(createConsoleLogBridgeScript(), at: 0)
         #endif
 
+        // Note: createMetadataScript() is intentionally excluded — it requires @MainActor
+        // and is called lazily at capture time by AppCoordinator.fetchMetadataPreview().
+
         return scripts
     }
 
