@@ -11,8 +11,8 @@ struct SettingsView: View {
     @AppStorage(UserDefaultsKeys.appTheme.rawValue) private var appTheme: String = AppTheme.system.rawValue
     @AppStorage(UserDefaultsKeys.useCustomToolbarColor.rawValue) private var useCustomToolbarColor: Bool = false
     @AppStorage(UserDefaultsKeys.toolbarColorHex.rawValue) private var toolbarColorHex: String = "#34A853"
-    @AppStorage(UserDefaultsKeys.showPromptMetadata.rawValue) private var showPromptMetadata: Bool = false
     @AppStorage(UserDefaultsKeys.debugModeEnabled.rawValue) private var debugModeEnabled: Bool = false
+    @AppStorage(UserDefaultsKeys.minimizeToPrompt.rawValue) private var minimizeToPrompt: Bool = false
     @AppStorage(UserDefaultsKeys.userAgentOption.rawValue) private var userAgentOption: String = UserAgentOption.safari.rawValue
     @AppStorage(UserDefaultsKeys.customUserAgent.rawValue) private var customUserAgent: String = ""
     @AppStorage(UserDefaultsKeys.panelPosition.rawValue) private var panelPosition: String = PanelPosition.bottomCenter.rawValue
@@ -61,6 +61,7 @@ struct SettingsView: View {
                     Spacer()
                     KeyboardShortcuts.Recorder(for: .bringToFront)
                 }
+                Toggle("Minimize to Prompt", isOn: $minimizeToPrompt)
             }
             Section("Appearance") {
                 HStack {
@@ -149,6 +150,9 @@ struct SettingsView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Prompts Folder")
+                        Text("Markdown files in this folder appear in the Insert Prompt menu")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Text(promptsDirLabel.isEmpty ? "No folder selected" : promptsDirLabel)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -162,6 +166,9 @@ struct SettingsView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Artifacts Folder")
+                        Text("Captured Gemini responses are saved here as Markdown files")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Text(artifactsDirLabel.isEmpty ? "No folder selected" : artifactsDirLabel)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -172,18 +179,19 @@ struct SettingsView: View {
                     }
                 }
 
-                Toggle("Show Prompt Metadata", isOn: $showPromptMetadata)
-
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Selectors")
+                        Text("JS expressions that extract metadata (model, request, URL) from Gemini when saving artifacts")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Text(selectorSource.isEmpty ? "Default (bundled)" : selectorSource)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button("Reveal in Finder") {
-                        revealSelectorsDirectory()
+                    Button("Reset to Defaults") {
+                        resetSelectorsToDefaults()
                     }
                 }
             }
@@ -199,6 +207,10 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .onAppear {
             loadDirectoryLabels()
+        }
+        .onDisappear {
+            GeminiSelectors.reload()
+            loadDirectoryLabels() // must follow reload() — reads isUsingUserFile to refresh selectorSource label
         }
         .alert("Reset Website Data?", isPresented: $showingResetAlert) {
             Button("Cancel", role: .cancel) { }
@@ -261,13 +273,46 @@ struct SettingsView: View {
         }
     }
 
-    private func revealSelectorsDirectory() {
+    private func resetSelectorsToDefaults() {
         guard let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory, in: .userDomainMask
         ).first else { return }
         let dir = appSupport.appendingPathComponent("GeminiDesktop")
+        let userURL = dir.appendingPathComponent("gemini-selectors.json")
+
+        // Pre-flight: ensure bundle resource exists before touching user file
+        guard let bundleURL = Bundle.main.url(forResource: "gemini-selectors", withExtension: "json") else { return }
+
+        // Backup existing user file if present; track backupURL for restore on copy failure
+        var backupURL: URL? = nil
+        if FileManager.default.fileExists(atPath: userURL.path) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd'T'HHmm"
+            let timestamp = formatter.string(from: Date())
+            let candidate = dir.appendingPathComponent("gemini-selectors-\(timestamp).bak")
+            do {
+                try FileManager.default.moveItem(at: userURL, to: candidate)
+                backupURL = candidate
+            } catch {
+                // Backup failed — abort to avoid partial state (user file stays intact)
+                return
+            }
+        }
+
+        // Copy bundle default to user path
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        NSWorkspace.shared.open(dir)
+        do {
+            try FileManager.default.copyItem(at: bundleURL, to: userURL)
+        } catch {
+            // Copy failed — restore backup to avoid leaving user with no selector file
+            if let backup = backupURL {
+                try? FileManager.default.moveItem(at: backup, to: userURL)
+            }
+            return
+        }
+
+        // Refresh the displayed source label
+        selectorSource = GeminiSelectors.isUsingUserFile ? "Custom (user file)" : "Default (bundled)"
     }
 }
 
